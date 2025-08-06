@@ -1,0 +1,6 @@
+@SawirahMunicipalityWeb_HostAddress = http://localhost:5093
+
+GET {{SawirahMunicipalityWeb_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
