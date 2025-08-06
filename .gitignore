@@ -1,7 +1,56 @@
-﻿.vs/
-bin/
-obj/
+﻿# Visual Studio
+.vs/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+
+# ASP.NET Core
+wwwroot/node_modules/
+appsettings.*.json
+appsettings.Development.json
+
+# Secret files (like local secrets)
+secrets.json
+*.pfx
+*.key
+
+# Rider IDE
+.idea/
+
+# Resharper
+_ReSharper*/
+
+# DotCover
+*.dotCover
+
+# Coverage Results
+TestResults/
+coverage/
+
+# NPM packages
+node_modules/
+
+# Logs
+*.log
+
+# SQLite database (if any)
+*.db
+
+# JetBrains Rider
+.idea/
+
+# Others
+*.vsix
+*.nupkg
+
+# Dotnet publish output
+publish/
+
+# Ignore launch settings (optional, if you don't want to share local launch configs)
+Properties/launchSettings.json
