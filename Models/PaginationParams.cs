@@ -1,4 +1,6 @@
-﻿namespace SawirahMunicipalityWeb.Models
+﻿using SawirahMunicipalityWeb.Enums;
+
+namespace SawirahMunicipalityWeb.Models
 {
     public class PaginationParams
     {
@@ -9,8 +11,9 @@
         public string SortDirection { get; set; } = "desc";
 
         public Guid? CategoryId { get; set; }
-
+        public string? ComplaintStatus { get; set; }
         public string? DateFilter { get; set; }
         public string SearchTerm { get; set; } = "";
+        public Guid? IssueTypeId { get; set; }
     }
 }

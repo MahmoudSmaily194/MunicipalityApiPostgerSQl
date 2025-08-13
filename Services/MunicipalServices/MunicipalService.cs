@@ -60,7 +60,7 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
 
         public async Task<PaginatedResponse<Service>> GetServicesAsync(PaginationParams paginationParams)
         {
-            var query = _context.Services.AsQueryable();
+            var query = _context.Services.OrderByDescending(c => c.CreatedAt).AsQueryable();
             if (paginationParams.CategoryId.HasValue)
             {
                 query = query.Where(n => n.CategoryId == paginationParams.CategoryId);

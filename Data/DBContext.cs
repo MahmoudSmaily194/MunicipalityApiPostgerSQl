@@ -14,6 +14,8 @@ namespace SawirahMunicipalityWeb.Data
         public DbSet<Service> Services { get; set; }
         public DbSet<ServicesCategories> ServicesCategories { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Complaint> Complaints { get; set; }
+        public DbSet<ComplaintIssue> ComplaintIssues { get; set; } 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

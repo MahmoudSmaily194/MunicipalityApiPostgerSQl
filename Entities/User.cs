@@ -5,6 +5,7 @@ namespace SawirahMunicipalityWeb.Entities
 {
     public class User:IdentityUser<Guid>
     {
+        public string? ProfilePhoto { get; set; }
         public string? FirstName {  get; set; }
 
         public string? LastName { get; set; }    

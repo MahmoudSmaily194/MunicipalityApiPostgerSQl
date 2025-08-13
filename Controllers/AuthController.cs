@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.AuhtServices;
+using System.Security.Claims;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
@@ -33,8 +34,8 @@ namespace SawirahMunicipalityWeb.Controllers
 
         [HttpPost("refresh-token")]
         public async Task<ActionResult> RefreshToken()
-       {
-          
+        {
+
             var refreshToken = Request.Cookies["RefreshToken"];
             if (string.IsNullOrEmpty(refreshToken))
                 return Unauthorized("Refresh token is missing");
@@ -44,13 +45,34 @@ namespace SawirahMunicipalityWeb.Controllers
                 return Unauthorized("Invalid refresh token");
 
             return Ok(result);
-           
+
         }
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
             await authService.LogoutAsync();
             return Ok(new { message = "Logged out successfully" });
+        }
+
+        [HttpPut("update_profile_photo")]
+
+        public async Task<IActionResult> UpdateProfilePhoto([FromForm] UpdateProfileImageDto request)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+            {
+                return Unauthorized();
+            }
+            var userId = Guid.Parse(userIdClaim.Value);
+            try
+            {
+                var imageUrl = await authService.UpdateProfileImageAsync(userId, request.File);
+                return Ok(new { message = "Profile image updated successfully", imageUrl });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
         }
     }
 }

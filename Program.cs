@@ -5,9 +5,12 @@ using Microsoft.IdentityModel.Tokens;
 using SawirahMunicipalityWeb.Data;
 using SawirahMunicipalityWeb.Entities;
 using SawirahMunicipalityWeb.Services.AuhtServices;
+using SawirahMunicipalityWeb.Services.ComplaintServices;
 using SawirahMunicipalityWeb.Services.EventsServices;
 using SawirahMunicipalityWeb.Services.MunicipalServices;
 using SawirahMunicipalityWeb.Services.NewsServices;
+using SawirahMunicipalityWeb.Services.SendEmailServices;
+using System;
 using System.Security.Claims;
 using System.Text;
 
@@ -21,19 +24,22 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DBConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DBConnection")));
+
+
 
 // ✅ Identity services for Guid-based User and Role
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<DBContext>()
     .AddDefaultTokenProviders();
 
-// ✅ Register AuthService
+// ✅  Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<INewsService , NewsService>();
+builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IMunicipalService, MunicipalService>();
-
+builder.Services.AddScoped<IComplaintService, ComplaintService>();
+builder.Services.AddTransient<ISendEmailService, SendEmailService>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

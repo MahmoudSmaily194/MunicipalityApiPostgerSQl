@@ -14,7 +14,7 @@ namespace SawirahMunicipalityWeb.Entities
         public string Slug { get; set; }
 
         // Fk
-        public Guid CategoryId { get; set; }
+        public Guid? CategoryId { get; set; }
 
         // Link to the Category Entity
         public ServicesCategories Category { get; set; } = null!;

@@ -47,7 +47,7 @@ namespace SawirahMunicipalityWeb.Services.EventsServices
         }
         public async Task<PaginatedResponse<Event>> GetAllEvents(PaginationParams paginationParams)
         {
-            var query = _context.Events.AsQueryable();
+            var query = _context.Events.OrderByDescending(e => e.Date).AsQueryable();
             //var sortBy = paginationParams.SortBy?.ToLower();
             //var sortDirection = paginationParams.SortDirection?.ToLower();
             //if (sortBy == "updatedat")

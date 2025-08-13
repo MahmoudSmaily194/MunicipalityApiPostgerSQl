@@ -8,7 +8,7 @@ namespace SawirahMunicipalityWeb.Models
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public Status Status { get; set; } = Status.Active;
-        public Guid CategoryId { get; set; }
+        public Guid? CategoryId { get; set; }
         
     }
 }

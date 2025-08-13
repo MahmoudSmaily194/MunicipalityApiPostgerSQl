@@ -9,6 +9,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
         Task<IdentityResult> RegisterAsync(RegisterDto request);
         Task<TokenResponseDto?> RefreshTokenAsync();
         Task LogoutAsync();
+        Task<string> UpdateProfileImageAsync(Guid userId, IFormFile file);
 
     }
 }

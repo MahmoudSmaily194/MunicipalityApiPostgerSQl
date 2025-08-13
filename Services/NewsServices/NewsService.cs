@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+﻿
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SawirahMunicipalityWeb.Data;
@@ -68,10 +68,9 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
 
         public async Task<PaginatedResponse<News>> GetVisibleAsync(PaginationParams paginationParams)
         {
-            var query = _context.News.AsQueryable();
+            var query = _context.News.OrderByDescending(c => c.CreatedAt).AsQueryable();
             if (!string.IsNullOrEmpty(paginationParams.DateFilter))
             {
-
                 DateTime now = DateTime.UtcNow;
 
                 switch (paginationParams.DateFilter.ToLower())
@@ -126,7 +125,7 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         public async Task<PaginatedResponse<News>> GetAllAsync(PaginationParams paginationParams)
         {
 
-            var query = _context.News.AsQueryable();
+            var query = _context.News.OrderByDescending(c => c.CreatedAt).AsQueryable();
             return await query.ToPaginatedListAsync(1, 10);
         }
 

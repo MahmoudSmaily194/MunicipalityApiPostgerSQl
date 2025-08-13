@@ -1,4 +1,4 @@
-﻿using Azure.Core;
+﻿
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,18 +21,21 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        private readonly IWebHostEnvironment _environment;
         public AuthService(DBContext context,
             IConfiguration configuration,
             UserManager<User> userManager,
             RoleManager<IdentityRole<Guid>> roleManager,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IWebHostEnvironment environment)
+
         {
             _context = context;
             _configuration = configuration;
             _userManager = userManager;
             _roleManager = roleManager;
             _httpContextAccessor = httpContextAccessor;
+            _environment = environment;
         }
 
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
@@ -69,6 +72,8 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
                 RefreshToken = null,
+                email = user.Email,
+                ProfilePhoto = user.ProfilePhoto
             };
         }
 
@@ -156,7 +161,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddSeconds(15),
+                expires: DateTime.UtcNow.AddMinutes(15),
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
@@ -225,7 +230,9 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 AccessToken = accessToken,
                 FullName = storedToken.User.FullName,
                 Role = storedToken.User.Role.ToString(),
-                RefreshToken = null
+                email = storedToken.User.Email,
+                RefreshToken = null,
+                ProfilePhoto=storedToken.User.ProfilePhoto
             };
         }
         public async Task LogoutAsync()
@@ -246,6 +253,39 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             // حذف الكوكي من المتصفح
             _httpContextAccessor.HttpContext?.Response.Cookies.Delete("RefreshToken");
         }
+        public async Task<string> UpdateProfileImageAsync(Guid userId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("No file uploaded.");
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
+            var extension = Path.GetExtension(file.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+                throw new ArgumentException("Invalid file type. Only JPG and PNG are allowed.");
+
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                throw new Exception("User not found.");
+
+            user.ProfilePhoto = $"/uploads/{uniqueFileName}";
+
+            await _context.SaveChangesAsync();
+
+            return user.ProfilePhoto;
+        }
+
 
     }
 }
