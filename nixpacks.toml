@@ -2,10 +2,16 @@
 builder = "nixpacks"
 
 [phases.setup]
-nixPkgs = ["dotnet-sdk_9"]
+nixPkgs = ["dotnet-sdk_9", "postgresql"]  # install .NET 9 and PostgreSQL client
 
 [phases.build]
-cmds = ["dotnet publish -c Release -o out"]
+cmds = [
+  "dotnet restore",                                     # restore NuGet packages
+  "dotnet build -c Release",                             # build the project
+  "dotnet ef database update",                           # run migrations
+  "dotnet publish -c Release -o out"                    # publish to 'out' folder
+]
 
 [start]
 cmd = "dotnet out/SawirahMunicipalityWeb.dll"
+
