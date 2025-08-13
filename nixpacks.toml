@@ -2,14 +2,14 @@
 builder = "nixpacks"
 
 [phases.setup]
-nixPkgs = ["dotnet-sdk_9_0", "postgresql"]  # correct package name
+nixPkgs = ["dotnet-sdk_9_0", "postgresql"]
 
 [phases.build]
 cmds = [
-  "dotnet restore",                     # restore NuGet packages
-  "dotnet build -c Release",             # build the project
-  "dotnet ef database update",           # run migrations
-  "dotnet publish -c Release -o out"     # publish to 'out' folder
+  "dotnet restore",
+  "dotnet build -c Release",
+  "dotnet ef database update",
+  "dotnet publish -c Release -o out"
 ]
 
 [start]
