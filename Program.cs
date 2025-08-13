@@ -24,7 +24,21 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DBContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DBConnection")));
+{
+    // First try local connection from config
+    var connStr = builder.Configuration.GetConnectionString("DBConnection");
+
+    // Then try Railway environment variable
+    var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (!string.IsNullOrEmpty(envConnStr))
+    {
+        // Append SSL mode for Railway
+        connStr = envConnStr + "?sslmode=Require";
+    }
+
+    options.UseNpgsql(connStr);
+});
+
 
 
 
