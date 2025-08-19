@@ -23,21 +23,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 // ------------------- Database -------------------
-builder.Services.AddDbContext<DBContext>(options =>
+var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
+
+if (!string.IsNullOrEmpty(envConnStr))
 {
-    // Local connection string from appsettings
-    var connStr = builder.Configuration.GetConnectionString("DBConnection");
-
-    // Override if Railway DATABASE_URL exists
-    var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
-    if (!string.IsNullOrEmpty(envConnStr))
+    builder.Services.AddDbContext<DBContext>(options =>
     {
-        // Ensure SSL for PostgreSQL on Railway
-        connStr = envConnStr + "?sslmode=Require";
-    }
-
-    options.UseNpgsql(connStr);
-});
+        // Use Railway database URL with SSL
+        var connStr = envConnStr + "?sslmode=Require";
+        options.UseNpgsql(connStr);
+    });
+}
 
 // ------------------- Identity -------------------
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()
