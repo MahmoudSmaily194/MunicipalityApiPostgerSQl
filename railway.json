@@ -1,4 +1,4 @@
 {
-  "build": "dotnet build SawirahMunicipalityWeb.csproj -c Release",
-  "start": "dotnet run --project SawirahMunicipalityWeb.csproj --urls=http://0.0.0.0:$PORT"
+  "build": "dotnet restore SawirahMunicipalityWeb/SawirahMunicipalityWeb.csproj && dotnet build SawirahMunicipalityWeb/SawirahMunicipalityWeb.csproj -c Release",
+  "start": "dotnet run --project SawirahMunicipalityWeb/SawirahMunicipalityWeb.csproj --urls=http://0.0.0.0:$PORT"
 }
