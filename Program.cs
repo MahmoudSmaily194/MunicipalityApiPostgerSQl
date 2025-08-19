@@ -21,7 +21,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.Services.AddHealthChecks();
 // ------------------- Database -------------------
 builder.Services.AddDbContext<DBContext>(options =>
 {
@@ -109,7 +109,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
