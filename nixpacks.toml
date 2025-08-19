@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [phases.setup]
-nixPkgs = ["dotnetCorePackages.dotnet_9.sdk", "postgresql"]
+nixPkgs = ["dotnet-sdk_8", "postgresql"]
 
 [phases.build]
 cmds = [
@@ -14,4 +14,3 @@ cmds = [
 
 [start]
 cmd = "dotnet out/SawirahMunicipalityWeb.dll"
-
