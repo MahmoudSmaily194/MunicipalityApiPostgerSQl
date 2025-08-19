@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Entities;
 using SawirahMunicipalityWeb.Models;
@@ -62,7 +63,7 @@ namespace SawirahMunicipalityWeb.Controllers
                 return StatusCode(500, new { message = "An error occurred", detail = ex.Message });
             }
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPost("create_complaint_issueType")]
 
         public async Task<IActionResult> CreateComplaintIssueType(CreateIssueTypeDto request)
