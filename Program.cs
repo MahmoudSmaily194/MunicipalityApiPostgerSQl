@@ -22,37 +22,37 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// ------------------- Database -------------------
 builder.Services.AddDbContext<DBContext>(options =>
 {
-    // First try local connection from config
+    // Local connection string from appsettings
     var connStr = builder.Configuration.GetConnectionString("DBConnection");
 
-    // Then try Railway environment variable
+    // Override if Railway DATABASE_URL exists
     var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
     if (!string.IsNullOrEmpty(envConnStr))
     {
-        // Append SSL mode for Railway
+        // Ensure SSL for PostgreSQL on Railway
         connStr = envConnStr + "?sslmode=Require";
     }
 
     options.UseNpgsql(connStr);
 });
 
-
-
-
-// ✅ Identity services for Guid-based User and Role
+// ------------------- Identity -------------------
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<DBContext>()
     .AddDefaultTokenProviders();
 
-// ✅  Services
+// ------------------- Services -------------------
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<INewsService, NewsService>();
 builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IMunicipalService, MunicipalService>();
 builder.Services.AddScoped<IComplaintService, ComplaintService>();
 builder.Services.AddTransient<ISendEmailService, SendEmailService>();
+
+// ------------------- JWT Authentication -------------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -73,13 +73,13 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         RoleClaimType = ClaimTypes.Role,
         ClockSkew = TimeSpan.Zero
-
     };
 });
+
 builder.Services.AddHttpContextAccessor();
 
-// Cores
-var allowedOrigin = "https://localhost:5173"; // Vite dev server port
+// ------------------- CORS -------------------
+var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "https://localhost:5173";
 
 builder.Services.AddCors(options =>
 {
@@ -88,38 +88,43 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigin)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // Enables cookies and auth headers
+              .AllowCredentials();
     });
 });
 
-
 var app = builder.Build();
-app.UseCors("FrontendPolicy"); // 🔁 Make sure it's applied before auth if needed
 
+app.UseCors("FrontendPolicy");
+
+// ------------------- Middleware -------------------
 app.UseCookiePolicy(new CookiePolicyOptions
 {
-    MinimumSameSitePolicy = SameSiteMode.None, // or SameSiteMode.None if needed
+    MinimumSameSitePolicy = SameSiteMode.None,
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
-    Secure = CookieSecurePolicy.SameAsRequest // Matches your Secure = false on HTTP
+    Secure = CookieSecurePolicy.SameAsRequest
 });
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseCookiePolicy();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseStaticFiles();
 app.MapControllers();
+
+// ------------------- Database Migration -------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DBContext>();
     db.Database.Migrate();
 }
+
+// ------------------- Listen on Railway PORT -------------------
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Urls.Add($"http://0.0.0.0:{port}");
+
 app.Run();
