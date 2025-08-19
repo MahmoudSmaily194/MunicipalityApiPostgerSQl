@@ -27,13 +27,27 @@ var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 if (!string.IsNullOrEmpty(envConnStr))
 {
+    // Parse the DATABASE_URL
+    var databaseUri = new Uri(envConnStr);
+    var userInfo = databaseUri.UserInfo.Split(':');
+
+    var npgsqlConnStr = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = databaseUri.Host,
+        Port = databaseUri.Port,
+        Username = userInfo[0],
+        Password = userInfo[1],
+        Database = databaseUri.AbsolutePath.TrimStart('/'),
+        SslMode = Npgsql.SslMode.Require,
+        TrustServerCertificate = true
+    }.ToString();
+
     builder.Services.AddDbContext<DBContext>(options =>
     {
-        // Use Railway database URL with SSL
-        var connStr = envConnStr + "?sslmode=Require";
-        options.UseNpgsql(connStr);
+        options.UseNpgsql(npgsqlConnStr);
     });
 }
+
 
 // ------------------- Identity -------------------
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()
