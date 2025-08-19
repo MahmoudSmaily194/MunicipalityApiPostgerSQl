@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [phases.setup]
-nixPkgs = ["dotnet-sdk_9_0", "postgresql"]
+nixPkgs = ["dotnet-sdk_9", "postgresql"]
 
 [phases.build]
 cmds = [
