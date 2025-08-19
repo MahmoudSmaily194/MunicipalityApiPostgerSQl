@@ -6,6 +6,10 @@
       },
       "start": {
         "command": "dotnet run --project SawirahMunicipalityWeb/SawirahMunicipalityWeb.csproj --urls=http://0.0.0.0:$PORT"
+      },
+      "env": {
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "ASPNETCORE_URLS": "http://0.0.0.0:$PORT"
       }
     }
   }
