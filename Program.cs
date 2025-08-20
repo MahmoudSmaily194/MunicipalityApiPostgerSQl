@@ -129,7 +129,7 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DBContext>();
-    db.Database.Migrate();
+    //db.Database.Migrate();
 }
 
 // ------------------- Listen on Railway PORT -------------------
