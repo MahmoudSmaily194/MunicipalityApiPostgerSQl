@@ -10,6 +10,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- Include migrations folder in build -->
+		<Folder Include="Migrations\" />
+		<!-- Or explicitly compile all migration files -->
+		<Compile Include="Migrations\**\*.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
 		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.7" />
