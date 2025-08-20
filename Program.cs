@@ -121,21 +121,33 @@ app.UseAuthorization();
 app.UseStaticFiles();
 app.MapControllers();
 
-// ------------------- Safe Database Migration -------------------
+// ------------------- Safe Database Migration with Retry -------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DBContext>();
-    try
+    int retries = 10;
+    while (retries > 0)
     {
-        db.Database.Migrate();
-        Console.WriteLine("Database migrated successfully.");
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Database migration failed: {ex.Message}");
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("Database migrated successfully.");
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            Console.WriteLine($"Migration failed: {ex.Message}. Retrying in 5 seconds... ({retries} retries left)");
+            Thread.Sleep(5000);
+        }
     }
 
-    // Optional: log all endpoints
+    if (retries == 0)
+    {
+        Console.WriteLine("Database migration failed after multiple attempts. App will continue.");
+    }
+
+    // Log all endpoints
     var endpoints = app.Services.GetRequiredService<EndpointDataSource>()
         .Endpoints.OfType<RouteEndpoint>();
     foreach (var endpoint in endpoints)
