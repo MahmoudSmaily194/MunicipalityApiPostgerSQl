@@ -12,8 +12,7 @@
 	<ItemGroup>
 		<!-- Include migrations folder in build -->
 		<Folder Include="Migrations\" />
-		<!-- Or explicitly compile all migration files -->
-		<Compile Include="Migrations\**\*.cs" />
+	
 	</ItemGroup>
 
 	<ItemGroup>
