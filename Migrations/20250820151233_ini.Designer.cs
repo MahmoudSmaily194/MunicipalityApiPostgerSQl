@@ -12,8 +12,8 @@ using SawirahMunicipalityWeb.Data;
 namespace SawirahMunicipalityWeb.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20250819170239_init")]
-    partial class init
+    [Migration("20250820151233_ini")]
+    partial class ini
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

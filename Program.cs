@@ -23,31 +23,21 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
 // ------------------- Database -------------------
-var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
-
-if (!string.IsNullOrEmpty(envConnStr))
+builder.Services.AddDbContext<DBContext>(options =>
 {
-    // Parse the DATABASE_URL
-    var databaseUri = new Uri(envConnStr);
-    var userInfo = databaseUri.UserInfo.Split(':');
+    // Local connection string from appsettings
+    var connStr = builder.Configuration.GetConnectionString("DBConnection");
 
-    var npgsqlConnStr = new Npgsql.NpgsqlConnectionStringBuilder
+    // Override if Railway DATABASE_URL exists
+    var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
+    if (!string.IsNullOrEmpty(envConnStr))
     {
-        Host = databaseUri.Host,
-        Port = databaseUri.Port,
-        Username = userInfo[0],
-        Password = userInfo[1],
-        Database = databaseUri.AbsolutePath.TrimStart('/'),
-        SslMode = Npgsql.SslMode.Require,
-        TrustServerCertificate = true
-    }.ToString();
+        // Ensure SSL for PostgreSQL on Railway
+        connStr = envConnStr + "?sslmode=Require";
+    }
 
-    builder.Services.AddDbContext<DBContext>(options =>
-    {
-        options.UseNpgsql(npgsqlConnStr);
-    });
-}
-
+    options.UseNpgsql(connStr);
+});
 
 // ------------------- Identity -------------------
 builder.Services.AddIdentity<User, IdentityRole<Guid>>()
