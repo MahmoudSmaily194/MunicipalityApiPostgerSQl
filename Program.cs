@@ -10,7 +10,6 @@ using SawirahMunicipalityWeb.Services.EventsServices;
 using SawirahMunicipalityWeb.Services.MunicipalServices;
 using SawirahMunicipalityWeb.Services.NewsServices;
 using SawirahMunicipalityWeb.Services.SendEmailServices;
-using System;
 using System.Security.Claims;
 using System.Text;
 
@@ -30,9 +29,7 @@ builder.Services.AddDbContext<DBContext>(options =>
     var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
     if (!string.IsNullOrEmpty(envConnStr))
     {
-        // Parse DATABASE_URL from Railway: postgresql://user:pass@host:port/dbname
         var databaseUrl = new Uri(envConnStr);
-
         var userInfo = databaseUrl.UserInfo.Split(':', 2);
         var username = userInfo[0];
         var password = userInfo.Length > 1 ? userInfo[1] : "";
@@ -40,8 +37,7 @@ builder.Services.AddDbContext<DBContext>(options =>
         var port = databaseUrl.Port;
         var db = databaseUrl.AbsolutePath.Trim('/');
 
-        connStr =
-            $"Host={host};Port={port};Database={db};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
+        connStr = $"Host={host};Port={port};Database={db};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
     }
 
     options.UseNpgsql(connStr);
@@ -88,7 +84,6 @@ builder.Services.AddHttpContextAccessor();
 
 // ------------------- CORS -------------------
 var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "https://localhost:5173";
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
@@ -102,9 +97,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// ------------------- Middleware -------------------
 app.UseCors("FrontendPolicy");
 
-// ------------------- Middleware -------------------
 app.UseCookiePolicy(new CookiePolicyOptions
 {
     MinimumSameSitePolicy = SameSiteMode.None,
@@ -112,6 +107,7 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.SameAsRequest
 });
 
+// Enable Swagger in Production
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -125,11 +121,32 @@ app.UseAuthorization();
 app.UseStaticFiles();
 app.MapControllers();
 
-// ------------------- Database Migration -------------------
+// ------------------- Safe Database Migration -------------------
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DBContext>();
-    //db.Database.Migrate();
+    try
+    {
+        // Apply pending migrations safely
+        db.Database.Migrate();
+        Console.WriteLine("Database migrated successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Database migration failed: {ex.Message}");
+        // Do not crash app; health checks will still work
+    }
+
+    // Optional: log all endpoints
+    var endpoints = app.Services.GetRequiredService<EndpointDataSource>()
+        .Endpoints.OfType<RouteEndpoint>();
+    foreach (var endpoint in endpoints)
+    {
+        var methods = string.Join(",", endpoint.Metadata
+            .OfType<HttpMethodMetadata>()
+            .FirstOrDefault()?.HttpMethods ?? new List<string>());
+        Console.WriteLine($"{endpoint.RoutePattern.RawText} [{methods}]");
+    }
 }
 
 // ------------------- Listen on Railway PORT -------------------
