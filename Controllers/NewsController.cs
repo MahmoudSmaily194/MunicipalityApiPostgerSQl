@@ -18,38 +18,44 @@ namespace SawirahMunicipalityWeb.Controllers
 
             try
             {
-                // 1. حفظ الصورة في السيرفر
+                // 1️⃣ Save Image Safely
                 string? imageUrl = null;
-
                 if (request.Image is { Length: > 0 })
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "news");
-                    Directory.CreateDirectory(folderPath); // تأكد من وجود المجلد
+                    // Use IWebHostEnvironment to get the correct wwwroot path
+                    var folderPath = Path.Combine(_env.WebRootPath, "images", "news");
+
+                    // Ensure folder exists
+                    Directory.CreateDirectory(folderPath);
 
                     var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
                     var filePath = Path.Combine(folderPath, fileName);
 
-                    using var stream = new FileStream(filePath, FileMode.Create);
+                    // Save image with proper FileAccess
+                    await using var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write);
                     await request.Image.CopyToAsync(stream);
 
-                    // إنشاء رابط للوصول إلى الصورة
+                    // Build the public URL
                     imageUrl = $"/images/news/{fileName}";
                 }
 
-                // 2. إنشاء DTO لتمريره إلى الـ service
+                // 2️⃣ Create DTO to pass to service
                 var createDto = new CreateNewsItemDto
                 {
                     Title = request.Title,
                     Description = request.Description,
                     Visibility = request.Visibility,
                     ImageUrl = imageUrl,
-
                 };
 
-                // 3. إنشاء الخبر
+                // 3️⃣ Create news
                 var news = await newsService.CreateNewsItemAsync(createDto);
 
                 return CreatedAtAction(nameof(GetNewsBySlug), new { slug = news.Slug }, news);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(500, new { message = "Cannot save image. Folder is not writable.", detail = ex.Message });
             }
             catch (InvalidOperationException ex)
             {
@@ -57,7 +63,7 @@ namespace SawirahMunicipalityWeb.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred", detail = ex.Message });
+                return StatusCode(500, new { message = "An error occurred while creating news.", detail = ex.Message });
             }
         }
 
