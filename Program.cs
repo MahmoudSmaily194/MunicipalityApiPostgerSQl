@@ -127,14 +127,12 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<DBContext>();
     try
     {
-        // Apply pending migrations safely
         db.Database.Migrate();
         Console.WriteLine("Database migrated successfully.");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"Database migration failed: {ex.Message}");
-        // Do not crash app; health checks will still work
     }
 
     // Optional: log all endpoints
