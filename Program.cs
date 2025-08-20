@@ -16,24 +16,32 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ------------------- Controllers & Swagger -------------------
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
+
 // ------------------- Database -------------------
 builder.Services.AddDbContext<DBContext>(options =>
 {
-    // Local connection string from appsettings
     var connStr = builder.Configuration.GetConnectionString("DBConnection");
 
-    // Override if Railway DATABASE_URL exists
     var envConnStr = Environment.GetEnvironmentVariable("DATABASE_URL");
     if (!string.IsNullOrEmpty(envConnStr))
     {
-        // Ensure SSL for PostgreSQL on Railway
-        connStr = envConnStr + "?sslmode=Require";
+        // Parse DATABASE_URL from Railway: postgresql://user:pass@host:port/dbname
+        var databaseUrl = new Uri(envConnStr);
+
+        var userInfo = databaseUrl.UserInfo.Split(':', 2);
+        var username = userInfo[0];
+        var password = userInfo.Length > 1 ? userInfo[1] : "";
+        var host = databaseUrl.Host;
+        var port = databaseUrl.Port;
+        var db = databaseUrl.AbsolutePath.Trim('/');
+
+        connStr =
+            $"Host={host};Port={port};Database={db};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
     }
 
     options.UseNpgsql(connStr);
@@ -109,6 +117,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 app.UseHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseAuthentication();
