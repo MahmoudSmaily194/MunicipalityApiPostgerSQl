@@ -112,11 +112,11 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.SameAsRequest
 });
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Municipality API V1");
+});
 
 app.UseHealthChecks("/health");
 //app.UseHttpsRedirection();
