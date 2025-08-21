@@ -2,15 +2,25 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Models;
+using SawirahMunicipalityWeb.Services.ImageService;
 using SawirahMunicipalityWeb.Services.MunicipalServices;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MunicipalServiceController(IMunicipalService municipalService) : ControllerBase
+    public class MunicipalServiceController : ControllerBase
     {
-        //[Authorize(Roles = "Admin")]
+        private readonly IMunicipalService _municipalService;
+        private readonly SupabaseImageService _imageService;
+
+        public MunicipalServiceController(IMunicipalService municipalService, SupabaseImageService imageService)
+        {
+            _municipalService = municipalService;
+            _imageService = imageService;
+        }
+
+        [Authorize(Roles = "Admin")]
         [HttpPost("create_service_category")]
         public async Task<IActionResult> CreateServiceCategory(CreateServiceCategoryDto request)
         {

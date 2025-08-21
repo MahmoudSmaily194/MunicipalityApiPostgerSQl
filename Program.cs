@@ -55,6 +55,9 @@ builder.Services.AddScoped<IEventsService, EventsService>();
 builder.Services.AddScoped<IMunicipalService, MunicipalService>();
 builder.Services.AddScoped<IComplaintService, ComplaintService>();
 builder.Services.AddTransient<ISendEmailService, SendEmailService>();
+builder.Services.AddHttpClient("SupabaseStorageClient");
+builder.Services.AddScoped<SawirahMunicipalityWeb.Services.ImageService.SupabaseImageService>();
+
 
 // ------------------- JWT Authentication -------------------
 builder.Services.AddAuthentication(options =>
