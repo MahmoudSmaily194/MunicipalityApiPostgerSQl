@@ -32,7 +32,7 @@ namespace SawirahMunicipalityWeb.Controllers
                 string? imageUrl = null;
                 if (request.Image is { Length: > 0 })
                 {
-                    imageUrl = await _imageService.UploadImageAsync(request.Image, "news-images");
+                    imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
 
                 // 2️⃣ إنشاء DTO لتمريره إلى الخدمة
