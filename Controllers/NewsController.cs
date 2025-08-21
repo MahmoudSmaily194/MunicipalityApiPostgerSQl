@@ -29,13 +29,12 @@ namespace SawirahMunicipalityWeb.Controllers
 
             try
             {
-                // 1️⃣ رفع الصورة إلى Supabase Storage
                 string? imageUrl = null;
                 if (request.Image is { Length: > 0 })
                 {
                     imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
-                // 2️⃣ إنشاء DTO لتمريره إلى الخدمة
+
                 var createDto = new CreateNewsItemDto
                 {
                     Title = request.Title,
@@ -44,18 +43,9 @@ namespace SawirahMunicipalityWeb.Controllers
                     ImageUrl = imageUrl,
                 };
 
-                // 3️⃣ إنشاء الخبر
                 var news = await _newsService.CreateNewsItemAsync(createDto);
 
                 return CreatedAtAction(nameof(GetNewsBySlug), new { slug = news.Slug }, news);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return StatusCode(500, new { message = "Cannot save image. Folder is not writable.", detail = ex.Message });
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(new { message = ex.Message });
             }
             catch (Exception ex)
             {
