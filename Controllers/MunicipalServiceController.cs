@@ -24,7 +24,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpPost("create_service_category")]
         public async Task<IActionResult> CreateServiceCategory(CreateServiceCategoryDto request)
         {
-            var res = await municipalService.CreateServiceCategoryAsync(request);
+            var res = await _municipalService.CreateServiceCategoryAsync(request);
             if (res is null)
             {
                 return Conflict(new { message = "Category name already exists." });
@@ -68,7 +68,7 @@ namespace SawirahMunicipalityWeb.Controllers
                 };
 
 
-                var res = await municipalService.CreateService(createDto);
+                var res = await _municipalService.CreateService(createDto);
                 return StatusCode(201, res);
             }
             catch (InvalidOperationException ex)
@@ -84,7 +84,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("service_categories")]
         public async Task<IActionResult> GetAllSeviceCategories()
         {
-            var res = await municipalService.GetServiceCategoriesAsync();
+            var res = await _municipalService.GetServiceCategoriesAsync();
             if (res is null)
             {
                 return NotFound("there is no service categories ");
@@ -95,14 +95,14 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("services")]
         public async Task<IActionResult> GetAllSevices([FromQuery] PaginationParams paginationParams)
         {
-            var res = await municipalService.GetServicesAsync(paginationParams);
+            var res = await _municipalService.GetServicesAsync(paginationParams);
             return Ok(res);
         }
         [Authorize(Roles = "Admin")]
         [HttpPut("update_service")]
         public async Task<IActionResult> UpdateService([FromQuery] Guid id, CreateServiceDto request)
         {
-            var res = await municipalService.UpdateServiceAsync(id, request);
+            var res = await _municipalService.UpdateServiceAsync(id, request);
             if (res == null)
             {
                 return NotFound();
@@ -114,7 +114,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpDelete("delete_service")]
         public async Task<IActionResult> DeleteService([FromQuery] Guid id)
         {
-            var res = await municipalService.DeleteServiceAsync(id);
+            var res = await _municipalService.DeleteServiceAsync(id);
             if (res == false)
             {
                 return NotFound("Service not found");
@@ -125,7 +125,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpPut("update_service_category")]
         public async Task<IActionResult> UpdateServiceCategory([FromQuery] Guid categoryId, CreateServiceCategoryDto request)
         {
-            var res = await municipalService.UpdateServiceCategoryAsync(categoryId, request);
+            var res = await _municipalService.UpdateServiceCategoryAsync(categoryId, request);
             if (res == null)
             {
                 return NotFound("category not found");
@@ -136,7 +136,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpDelete("delete_service_category")]
         public async Task<IActionResult> DeleteServiceCategory([FromQuery] Guid id)
         {
-            var res = await municipalService.DeleteServiceCategoryAsync(id);
+            var res = await _municipalService.DeleteServiceCategoryAsync(id);
             if (res == false)
             {
                 return NotFound("Category not found");
@@ -147,7 +147,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get_service_byId")]
         public async Task<IActionResult> GetServiceById([FromQuery] Guid id)
         {
-            var res = await municipalService.GetServiceByIdAsync(id);
+            var res = await _municipalService.GetServiceByIdAsync(id);
             if (res == null)
             {
                 return NotFound();
