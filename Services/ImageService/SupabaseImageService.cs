@@ -34,7 +34,7 @@ namespace SawirahMunicipalityWeb.Services.ImageService
         /// <summary>
         /// يرفع صورة إلى bucket ويرجع رابط public (يعمل إذا كان الـ bucket Public)
         /// </summary>
-        public async Task<string> UploadImageAsync(IFormFile file, string bucket = "news-images", bool upsert = true)
+        public async Task<string> UploadImageAsync(IFormFile file, string bucket = "sawirah-images", bool upsert = true)
         {
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty", nameof(file));

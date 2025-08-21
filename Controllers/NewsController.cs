@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.ImageService;
 using SawirahMunicipalityWeb.Services.NewsServices;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
@@ -34,7 +35,6 @@ namespace SawirahMunicipalityWeb.Controllers
                 {
                     imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
-
                 // 2️⃣ إنشاء DTO لتمريره إلى الخدمة
                 var createDto = new CreateNewsItemDto
                 {
