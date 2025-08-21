@@ -44,8 +44,6 @@ namespace SawirahMunicipalityWeb.Services.ImageService
             using var content = new StreamContent(stream);
             content.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
 
-            // ❌ استخدام POST كان سبب 404
-            // ✅ استخدام PUT مع المسار الكامل للملف داخل الباكيت
             var url = $"storage/v1/object/{bucket}/{fileName}";
             var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
