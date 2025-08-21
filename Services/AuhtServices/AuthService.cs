@@ -38,7 +38,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             _roleManager = roleManager;
             _httpContextAccessor = httpContextAccessor;
             _environment = environment;
-            _imageService= imageService
+            _imageService = imageService;
         }
 
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
@@ -235,7 +235,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 Role = storedToken.User.Role.ToString(),
                 email = storedToken.User.Email,
                 RefreshToken = null,
-                ProfilePhoto=storedToken.User.ProfilePhoto
+                ProfilePhoto = storedToken.User.ProfilePhoto
             };
         }
         public async Task LogoutAsync()
