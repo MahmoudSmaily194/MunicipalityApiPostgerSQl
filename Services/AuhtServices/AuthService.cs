@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,11 +7,11 @@ using SawirahMunicipalityWeb.Data;
 using SawirahMunicipalityWeb.Entities;
 using SawirahMunicipalityWeb.Enums;
 using SawirahMunicipalityWeb.Models;
+using SawirahMunicipalityWeb.Services.ImageService;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Http;
 
 namespace SawirahMunicipalityWeb.Services.AuhtServices
 {
@@ -22,12 +23,13 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
         private readonly RoleManager<IdentityRole<Guid>> _roleManager;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _environment;
+        private readonly SupabaseImageService _imageService;
         public AuthService(DBContext context,
             IConfiguration configuration,
             UserManager<User> userManager,
             RoleManager<IdentityRole<Guid>> roleManager,
             IHttpContextAccessor httpContextAccessor,
-            IWebHostEnvironment environment)
+            IWebHostEnvironment environment, SupabaseImageService imageService)
 
         {
             _context = context;
@@ -36,6 +38,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             _roleManager = roleManager;
             _httpContextAccessor = httpContextAccessor;
             _environment = environment;
+            _imageService= imageService
         }
 
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
@@ -264,22 +267,23 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             if (!allowedExtensions.Contains(extension))
                 throw new ArgumentException("Invalid file type. Only JPG and PNG are allowed.");
 
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-            Directory.CreateDirectory(uploadsFolder);
-
-            var uniqueFileName = $"{Guid.NewGuid()}{extension}";
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            // رفع الصورة إلى Supabase بدلاً من حفظها محليًا
+            string imageUrl;
+            try
             {
-                await file.CopyToAsync(stream);
+                imageUrl = await _imageService.UploadImageAsync(file, "user-profile-images");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to upload image to Supabase: " + ex.Message);
             }
 
+            // تحديث المستخدم في قاعدة البيانات
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
                 throw new Exception("User not found.");
 
-            user.ProfilePhoto = $"/uploads/{uniqueFileName}";
+            user.ProfilePhoto = imageUrl;
 
             await _context.SaveChangesAsync();
 

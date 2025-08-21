@@ -4,13 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Entities;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.EventsServices;
+using SawirahMunicipalityWeb.Services.ImageService;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class EventController(IEventsService eventsService) : ControllerBase
+    public class EventController : ControllerBase
     {
+        public readonly IEventsService _eventsService;
+        private readonly SupabaseImageService _imageService;
+        public EventController(IEventsService eventsService , SupabaseImageService imageService)
+        {
+            _eventsService = eventsService;
+            _imageService = imageService;
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost("create_event")]
 
@@ -22,22 +31,10 @@ namespace SawirahMunicipalityWeb.Controllers
             }
             try
             {
-                // 1. حفظ الصورة في السيرفر
                 string? imageUrl = null;
-
                 if (request.Image is { Length: > 0 })
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "events");
-                    Directory.CreateDirectory(folderPath); // تأكد من وجود المجلد
-
-                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
-                    var filePath = Path.Combine(folderPath, fileName);
-
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await request.Image.CopyToAsync(stream);
-
-                    // إنشاء رابط للوصول إلى الصورة
-                    imageUrl = $"/images/events/{fileName}";
+                    imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
                 var createDto = new CreateEventDto
                 {
@@ -47,7 +44,7 @@ namespace SawirahMunicipalityWeb.Controllers
                    Date=request.Date,
                     ImageUrl = imageUrl
                 };
-                var events = await eventsService.CreateEventAsync(createDto);
+                var events = await _eventsService.CreateEventAsync(createDto);
                 return CreatedAtAction(nameof(GetEventBySlug), new { slug = events.Slug }, events);
             }
             catch (InvalidOperationException ex)
@@ -65,7 +62,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get_event")]
         public async Task<IActionResult> GetEventBySlug([FromQuery] string slug)
         {
-            var res = await eventsService.GetBySlugAsync(slug);
+            var res = await _eventsService.GetBySlugAsync(slug);
             if (res == null)
             {
                 return NotFound();
@@ -76,7 +73,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get_all_events")]
         public async Task<IActionResult> GetAllEvents([FromQuery]  PaginationParams paginationParams)
         {
-            var res = await eventsService.GetAllEvents(paginationParams);
+            var res = await _eventsService.GetAllEvents(paginationParams);
             return Ok(res);
         }
         [Authorize(Roles = "Admin")]
@@ -84,7 +81,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
         public async Task<IActionResult> UpdateEvent([FromQuery] Guid id, [FromBody] CreateEventDto request)
         {
-            var res = await eventsService.UpdateEventAsync(id, request);
+            var res = await _eventsService.UpdateEventAsync(id, request);
             if (res == null)
             {
                 return NotFound();
@@ -96,7 +93,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
         public async Task<IActionResult> DeleteEvent([FromQuery] Guid id)
         {
-            var res = await eventsService.DeleteEventAsync(id);
+            var res = await _eventsService.DeleteEventAsync(id);
             if (res == false)
             {
                 return NotFound();

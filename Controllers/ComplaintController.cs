@@ -4,13 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Entities;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.ComplaintServices;
+using SawirahMunicipalityWeb.Services.ImageService;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ComplaintController(IComplaintService complaintService) : ControllerBase
+    public class ComplaintController : ControllerBase
     {
+        public readonly IComplaintService _complaintService;
+        private readonly SupabaseImageService _imageService;
+        public ComplaintController(IComplaintService complaintService, SupabaseImageService imageService) 
+        {
+            _complaintService= complaintService;
+            _imageService = imageService;
+        }
+
         [HttpPost("create_complaint")]
         public async Task<IActionResult> CreateComplaint([FromForm] CreateComplaintFormDataDto request)
         {
@@ -20,22 +29,10 @@ namespace SawirahMunicipalityWeb.Controllers
             }
             try
             {
-                // 1. حفظ الصورة في السيرفر
                 string? imageUrl = null;
-
                 if (request.Image is { Length: > 0 })
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "complaints");
-                    Directory.CreateDirectory(folderPath); // تأكد من وجود المجلد
-
-                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
-                    var filePath = Path.Combine(folderPath, fileName);
-
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await request.Image.CopyToAsync(stream);
-
-                    // إنشاء رابط للوصول إلى الصورة
-                    imageUrl = $"/images/complaints/{fileName}";
+                    imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
                 var createDto = new CreateComplaintDto
                 {
@@ -47,7 +44,7 @@ namespace SawirahMunicipalityWeb.Controllers
                     Latitude = request.Latitude,
                     Longitude = request.Longitude,
                 };
-                var complaint = await complaintService.CreateComplaintAsync(createDto);
+                var complaint = await _complaintService.CreateComplaintAsync(createDto);
                 return Created(string.Empty, new
                 {
                     message = "Complaint created successfully",
@@ -68,7 +65,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
         public async Task<IActionResult> CreateComplaintIssueType(CreateIssueTypeDto request)
         {
-            var res = await complaintService.CreateComplaintIssueAsync(request);
+            var res = await _complaintService.CreateComplaintIssueAsync(request);
 
             if (res is null)
             {
@@ -85,7 +82,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
         public async Task<IActionResult> getComplaintPaged([FromQuery] PaginationParams paginationParams)
         {
-            var res = await complaintService.getComplaintPagedAsync(paginationParams);
+            var res = await _complaintService.getComplaintPagedAsync(paginationParams);
             return Ok(res);
         }
 
@@ -93,7 +90,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get_complaint_by_id")]
         public async Task<IActionResult> getComplaint([FromQuery] Guid Id)
         {
-            var res = await complaintService.getComplaint(Id);
+            var res = await _complaintService.getComplaint(Id);
             if (res is null) { return NotFound("complaint not found"); }
             return Ok(res);
         }
@@ -101,7 +98,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get_public_complaints")]
         public async Task<IActionResult> GetPublicComplaints([FromQuery] PaginationParams paginationParams)
         {
-            var res = await complaintService.getPublicComplaintPagedAsync(paginationParams);
+            var res = await _complaintService.getPublicComplaintPagedAsync(paginationParams);
             return Ok(res);
         }
 
@@ -109,14 +106,14 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("issue_types")]
         public async Task<IActionResult> getComplaintIssues()
         {
-            var res = await complaintService.getComplaintIssueAsync();
+            var res = await _complaintService.getComplaintIssueAsync();
 
             return Ok(res);
         }
         [HttpPut("update_complaint")]
         public async Task<IActionResult> UpdateComplaint([FromQuery] Guid Id, UpdateComplaintDto updateComplaintDto)
         {
-            var res = await complaintService.updateComplaint(Id, updateComplaintDto);
+            var res = await _complaintService.updateComplaint(Id, updateComplaintDto);
             if (res is null) { return NotFound("complaint not found"); }
             return Ok(res);
         }
@@ -124,7 +121,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpDelete("delete_complaint_issueType")]
         public async Task<IActionResult> DeleteComplaintIssueType([FromQuery] Guid Id)
         {
-            var res = await complaintService.DeleteIssueTypeAsync(Id);
+            var res = await _complaintService.DeleteIssueTypeAsync(Id);
             if (res == false)
             {
                 return NotFound("the issue type was not found");
@@ -136,7 +133,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
         public async Task<IActionResult> SetComplaintAsSeen([FromQuery] Guid Id)
         {
-            var res = await complaintService.SetComplaintAsSeen(Id);
+            var res = await _complaintService.SetComplaintAsSeen(Id);
             if (res == false) { return NotFound("complaint is not found"); }
             return Ok(res);
         }
@@ -144,7 +141,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [HttpGet("get-seen-complaints")]
         public async Task<IActionResult> GetUnseenComplaints([FromQuery] PaginationParams paginationParams)
         {
-            var res =await complaintService.GetUnseenComplaints(paginationParams);
+            var res =await _complaintService.GetUnseenComplaints(paginationParams);
             return Ok(res);
         }
     }

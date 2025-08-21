@@ -43,20 +43,9 @@ namespace SawirahMunicipalityWeb.Controllers
             try
             {
                 string? imageUrl = null;
-
                 if (request.Image is { Length: > 0 })
                 {
-                    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "events");
-                    Directory.CreateDirectory(folderPath); // تأكد من وجود المجلد
-
-                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(request.Image.FileName)}";
-                    var filePath = Path.Combine(folderPath, fileName);
-
-                    using var stream = new FileStream(filePath, FileMode.Create);
-                    await request.Image.CopyToAsync(stream);
-
-                    // إنشاء رابط للوصول إلى الصورة
-                    imageUrl = $"/images/events/{fileName}";
+                    imageUrl = await _imageService.UploadImageAsync(request.Image, "sawirah-images");
                 }
                 var createDto = new CreateServiceDto
                 {
