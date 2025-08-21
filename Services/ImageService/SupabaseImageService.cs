@@ -40,13 +40,14 @@ namespace SawirahMunicipalityWeb.Services.ImageService
 
             var fileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.FileName)}";
 
-            using var content = new MultipartFormDataContent();
             using var stream = file.OpenReadStream();
-            var streamContent = new StreamContent(stream);
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
-            content.Add(streamContent, "file", fileName);
+            using var content = new StreamContent(stream);
+            content.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType ?? "application/octet-stream");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, $"storage/v1/object/{bucket}")
+            // ❌ استخدام POST كان سبب 404
+            // ✅ استخدام PUT مع المسار الكامل للملف داخل الباكيت
+            var url = $"storage/v1/object/{bucket}/{fileName}";
+            var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = content
             };
@@ -61,6 +62,7 @@ namespace SawirahMunicipalityWeb.Services.ImageService
                 throw new Exception($"Supabase storage upload failed. Status: {resp.StatusCode}. Body: {body}");
             }
 
+            // رابط public للصورة
             var publicUrl = $"{_publicPrefix}/{bucket}/{Uri.EscapeDataString(fileName)}";
             return publicUrl;
         }
