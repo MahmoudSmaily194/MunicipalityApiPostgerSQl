@@ -86,12 +86,17 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddHttpContextAccessor();
 
 // ------------------- CORS -------------------
-var allowedOrigin = builder.Configuration["AllowedOrigin"] ?? "https://localhost:5173";
+var allowedOrigins = new[]
+{
+    "https://localhost:5173",
+    "https://sawirah.netlify.app"
+};
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendPolicy", policy =>
     {
-        policy.WithOrigins(allowedOrigin)
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -99,6 +104,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+app.UseCors("FrontendPolicy");
 
 // ------------------- Middleware -------------------
 app.UseCors("FrontendPolicy");

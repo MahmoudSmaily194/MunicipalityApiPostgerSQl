@@ -77,7 +77,7 @@ namespace SawirahMunicipalityWeb.Controllers
                 res
             });
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet("get_complaints")]
 
         public async Task<IActionResult> getComplaintPaged([FromQuery] PaginationParams paginationParams)
@@ -110,6 +110,7 @@ namespace SawirahMunicipalityWeb.Controllers
 
             return Ok(res);
         }
+        [Authorize(Roles = "Admin")]
         [HttpPut("update_complaint")]
         public async Task<IActionResult> UpdateComplaint([FromQuery] Guid Id, UpdateComplaintDto updateComplaintDto)
         {
@@ -117,7 +118,7 @@ namespace SawirahMunicipalityWeb.Controllers
             if (res is null) { return NotFound("complaint not found"); }
             return Ok(res);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("delete_complaint_issueType")]
         public async Task<IActionResult> DeleteComplaintIssueType([FromQuery] Guid Id)
         {
@@ -128,7 +129,7 @@ namespace SawirahMunicipalityWeb.Controllers
             }
             return Ok(res);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPut("set_complaint_seen")]
 
         public async Task<IActionResult> SetComplaintAsSeen([FromQuery] Guid Id)

@@ -20,7 +20,7 @@ namespace SawirahMunicipalityWeb.Controllers
             _imageService = imageService;
         }
 
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPost("create_news")]
         public async Task<IActionResult> CreateNews([FromForm] CreateNewsItemFormData request)
         {
