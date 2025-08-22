@@ -85,12 +85,6 @@ namespace SawirahMunicipalityWeb.Controllers
         public async Task<IActionResult> GetAllNews([FromQuery] PaginationParams paginationParams)
         {
             var result = await _newsService.GetAllAsync(paginationParams);
-
-            if (result.Items == null || result.Items.Count == 0)
-            {
-                return NotFound(new { message = "No news found for the given filters." });
-            }
-
             return Ok(result);
         }
         [Authorize(Roles = "Admin")]
