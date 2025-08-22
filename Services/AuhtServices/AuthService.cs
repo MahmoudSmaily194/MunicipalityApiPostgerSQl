@@ -271,7 +271,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             string imageUrl;
             try
             {
-                imageUrl = await _imageService.UploadImageAsync(file, "user-profile-images");
+                imageUrl = await _imageService.UploadImageAsync(file, "sawirah-images");
             }
             catch (Exception ex)
             {
