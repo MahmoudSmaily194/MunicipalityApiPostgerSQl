@@ -1,4 +1,5 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.AuhtServices;
@@ -55,7 +56,7 @@ namespace SawirahMunicipalityWeb.Controllers
         }
 
         [HttpPut("update_profile_photo")]
-
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateProfilePhoto([FromForm] UpdateProfileImageDto request)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
