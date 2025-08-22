@@ -158,5 +158,26 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<News?> GetAllNewsItemBySlugAsync(string slug)
+        {
+            var newsItem = await _context.News
+            .FirstOrDefaultAsync(n => EF.Functions.ILike(n.Slug, $"%{slug}%"));
+            if (newsItem is null)
+            {
+                return null;
+            }
+            return new News
+            {
+                Title = newsItem.Title,
+                Description = newsItem.Description,
+                UpdatedAt = newsItem.UpdatedAt,
+                ImageUrl = newsItem.ImageUrl,
+                Id = newsItem.Id,
+                Slug = newsItem.Slug,
+                Visibility = newsItem.Visibility,
+
+            };
+        }
     }
 }

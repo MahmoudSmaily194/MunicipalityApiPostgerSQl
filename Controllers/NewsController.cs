@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using SawirahMunicipalityWeb.Models;
 using SawirahMunicipalityWeb.Services.ImageService;
 using SawirahMunicipalityWeb.Services.NewsServices;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SawirahMunicipalityWeb.Controllers
 {
@@ -63,7 +62,16 @@ namespace SawirahMunicipalityWeb.Controllers
 
             return Ok(news);
         }
+        [HttpGet("get-newsItem-by-admin")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllNewsItemBySlugAsync([FromQuery] string slug)
+        {
+            var news = await _newsService.GetBySlugAsync(slug);
+            if (news == null)
+                return NotFound();
 
+            return Ok(news);
+        }
 
         [HttpGet("get_visible_news")]
         public async Task<IActionResult> GetVisibleNews([FromQuery] PaginationParams paginationParams)
