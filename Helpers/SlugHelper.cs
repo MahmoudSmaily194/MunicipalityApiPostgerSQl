@@ -38,6 +38,22 @@ namespace SawirahMunicipalityWeb.Helpers
             // Replace multiple hyphens with single hyphen
             slug = Regex.Replace(slug, @"-+", "-");
 
+            // ✅ Limit slug length (safe for PostgreSQL identifiers)
+            const int maxLength = 60;
+            if (slug.Length > maxLength)
+            {
+                // حاول قص عند أقرب "-" بدل القص العشوائي
+                string truncated = slug.Substring(0, maxLength);
+
+                int lastDash = truncated.LastIndexOf('-');
+                if (lastDash > 0)
+                    slug = truncated.Substring(0, lastDash);
+                else
+                    slug = truncated;
+
+                slug = slug.Trim('-');
+            }
+
             return slug;
         }
 
@@ -72,7 +88,14 @@ namespace SawirahMunicipalityWeb.Helpers
                     slugPropertySelector.Parameters
                 )))
             {
-                slug = $"{baseSlug}-{count}";
+                // لما يصير تكرار، أضف رقم وتأكد ما تتخطى الطول
+                string suffix = $"-{count}";
+                if (baseSlug.Length + suffix.Length > 60)
+                {
+                    baseSlug = baseSlug.Substring(0, 60 - suffix.Length).Trim('-');
+                }
+
+                slug = $"{baseSlug}{suffix}";
                 count++;
             }
 
