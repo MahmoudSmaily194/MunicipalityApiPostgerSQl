@@ -22,9 +22,9 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         public async Task<News?> CreateNewsItemAsync(CreateNewsItemDto request)
         {
             var slug = await SlugHelper.GenerateUniqueSlug<News>(
-    request.Title,
-    _context,
-    n => n.Slug
+            request.Title,
+            _context,
+            n => n.Slug
 );
             var news = new News
             {
@@ -47,8 +47,8 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         public async Task<News?> GetBySlugAsync(string slug)
         {
             var newsItem = await _context.News
-     .FirstOrDefaultAsync(n => EF.Functions.ILike(n.Slug, slug)
-                               && n.Visibility == Visibility.Public);
+            .FirstOrDefaultAsync(n => EF.Functions.ILike(n.Slug, $"%{slug}%")
+            && n.Visibility == Visibility.Public);
             if (newsItem is null)
             {
                 return null;
@@ -140,10 +140,10 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
             newsItem.ImageUrl = dto.ImageUrl;
 
             newsItem.Slug = await SlugHelper.GenerateUniqueSlug<News>(
-dto.Title,
-_context,
-n => n.Slug
-);
+            dto.Title,
+            _context,
+            n => n.Slug
+            );
 
             newsItem.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
