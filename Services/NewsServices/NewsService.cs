@@ -69,7 +69,7 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
 
         public async Task<PaginatedResponse<News>> GetVisibleAsync(PaginationParams paginationParams)
         {
-            var query = _context.News.OrderByDescending(c => c.CreatedAt).AsQueryable();
+            var query = _context.News.OrderByDescending(c => c.CreatedAt).Where(n => n.Visibility == Visibility.Public).AsQueryable();
             if (!string.IsNullOrEmpty(paginationParams.DateFilter))
             {
                 DateTime now = DateTime.UtcNow;
