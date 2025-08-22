@@ -133,18 +133,12 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         public async Task<News?> UpdateNewsItemAsync(Guid id, UpdateNewsItemDto dto)
         {
             var newsItem = await _context.News.FindAsync(id);
+
             if (newsItem is null) return null;
-            
+
             newsItem.Visibility = dto.Visibility;
-         
-
-            newsItem.Slug = await SlugHelper.GenerateUniqueSlug<News>(
-            dto.Title,
-            _context,
-            n => n.Slug
-            );
-
             newsItem.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
             return newsItem;
         }
