@@ -47,7 +47,8 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         public async Task<News?> GetBySlugAsync(string slug)
         {
             var newsItem = await _context.News
-                .FirstOrDefaultAsync(n => n.Slug == slug && n.Visibility == Visibility.Public);
+     .FirstOrDefaultAsync(n => EF.Functions.ILike(n.Slug, slug)
+                               && n.Visibility == Visibility.Public);
             if (newsItem is null)
             {
                 return null;
