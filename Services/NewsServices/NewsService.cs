@@ -134,10 +134,9 @@ namespace SawirahMunicipalityWeb.Services.NewsServices
         {
             var newsItem = await _context.News.FindAsync(id);
             if (newsItem is null) return null;
-            newsItem.Title = dto.Title;
-            newsItem.Description = dto.Description;
+            
             newsItem.Visibility = dto.Visibility;
-            newsItem.ImageUrl = dto.ImageUrl;
+         
 
             newsItem.Slug = await SlugHelper.GenerateUniqueSlug<News>(
             dto.Title,
