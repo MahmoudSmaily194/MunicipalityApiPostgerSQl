@@ -8,7 +8,7 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
         Task<ServicesCategories> CreateServiceCategoryAsync(CreateServiceCategoryDto dto);
         Task<Service?> CreateService(CreateServiceDto dto);
         Task<Service> GetServiceByIdAsync(Guid id);
-        Task<PaginatedResponse<Service>> GetServicesAsync(PaginationParams paginationParams);
+        Task<PaginatedResponse<GetServiceDto>> GetServicesAsync(PaginationParams paginationParams);
         Task<List<ServicesCategories>> GetServiceCategoriesAsync();
         Task<Service?> UpdateServiceAsync(Guid id, CreateServiceDto dto);
         Task<bool> DeleteServiceAsync(Guid id);

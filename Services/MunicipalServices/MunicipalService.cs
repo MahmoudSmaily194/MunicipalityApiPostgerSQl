@@ -58,18 +58,24 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
             return service;
         }
 
-        public async Task<PaginatedResponse<Service>> GetServicesAsync(PaginationParams paginationParams)
+        public async Task<PaginatedResponse<GetServiceDto>> GetServicesAsync(PaginationParams paginationParams)
         {
-            var query = _context.Services.OrderByDescending(c => c.CreatedAt).AsQueryable();
+            var query = _context.Services
+                .Include(s => s.Category) // include Category so CategoryName is available
+                .OrderByDescending(c => c.CreatedAt)
+                .AsQueryable();
+
             if (paginationParams.CategoryId.HasValue)
             {
                 query = query.Where(n => n.CategoryId == paginationParams.CategoryId);
             }
+
             if (!string.IsNullOrEmpty(paginationParams.SearchTerm))
             {
-
-                query = query.Where(n => n.Title.ToLower().Contains(paginationParams.SearchTerm.ToLower()) || n.Description.ToLower().Contains(paginationParams.SearchTerm.ToLower()));
+                var term = paginationParams.SearchTerm.ToLower();
+                query = query.Where(n => n.Title.ToLower().Contains(term) || n.Description.ToLower().Contains(term));
             }
+
             var sortBy = paginationParams.SortBy?.ToLower();
             var sortDirection = paginationParams.SortDirection?.ToLower();
 
@@ -86,8 +92,27 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
                     : query.OrderByDescending(n => n.Title);
             }
 
+            // Project into DTO
+            var projectedQuery = query.Select(s => new GetServiceDto
+            {
+                Id = s.Id,
+                ImageUrl = s.ImageUrl,
+                Title = s.Title,
+                Description = s.Description,
+                Status = s.Status,
+                CreatedAt = s.CreatedAt,
+                UpdatedAt = s.UpdatedAt,
+                Slug = s.Slug,
+                CategoryId = s.CategoryId,
+                CategoryName = s.Category != null ? s.Category.Name : null
+            });
 
-            var paginated = await query.ToPaginatedListAsync(paginationParams.PageNumber, paginationParams.PageSize);
+            // Paginate after projection
+            var paginated = await projectedQuery.ToPaginatedListAsync(
+                paginationParams.PageNumber,
+                paginationParams.PageSize
+            );
+
             return paginated;
         }
 

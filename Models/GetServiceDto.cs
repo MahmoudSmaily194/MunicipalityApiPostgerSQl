@@ -1,9 +1,9 @@
-﻿using SawirahMunicipalityWeb.Enums;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using SawirahMunicipalityWeb.Entities;
+using SawirahMunicipalityWeb.Enums;
 
-namespace SawirahMunicipalityWeb.Entities
+namespace SawirahMunicipalityWeb.Models
 {
-    public class Service
+    public class GetServiceDto
     {
         public Guid Id { get; set; }
         public string? ImageUrl { get; set; }
@@ -12,13 +12,11 @@ namespace SawirahMunicipalityWeb.Entities
         public Status Status { get; set; } = Status.Active;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-        public string Slug { get; set; }
-        [NotMapped]
-        public string? CategoryName => Category?.Name;
+        public string Slug { get; set; } = string.Empty;
+
         // Fk
         public Guid? CategoryId { get; set; }
 
-        // Link to the Category Entity
-        public ServicesCategories Category { get; set; } = null!;
+        public string? CategoryName { get; set; }
     }
 }

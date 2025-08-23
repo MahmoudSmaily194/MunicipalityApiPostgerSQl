@@ -62,8 +62,10 @@ namespace SawirahMunicipalityWeb.Controllers
 
             return Ok(news);
         }
+
+        [Authorize(Roles = "Admin")]
         [HttpGet("get-newsItem-by-admin")]
-        [AllowAnonymous]
+
         public async Task<IActionResult> GetAllNewsItemBySlugAsync([FromQuery] string slug)
         {
             var news = await _newsService.GetAllNewsItemBySlugAsync(slug);
