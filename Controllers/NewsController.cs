@@ -66,7 +66,7 @@ namespace SawirahMunicipalityWeb.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAllNewsItemBySlugAsync([FromQuery] string slug)
         {
-            var news = await _newsService.GetBySlugAsync(slug);
+            var news = await _newsService.GetAllNewsItemBySlugAsync(slug);
             if (news == null)
                 return NotFound();
 
