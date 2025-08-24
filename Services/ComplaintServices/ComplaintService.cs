@@ -117,7 +117,8 @@ namespace SawirahMunicipalityWeb.Services.ComplaintServices
 
         public async Task<List<ComplaintIssue>> getComplaintIssueAsync()
         {
-            var res = await _context.ComplaintIssues.OrderBy(e => e.Id).ToListAsync();
+            var res = await _context.ComplaintIssues.Where(i => i.IsDeleted == false)
+                      .OrderBy(e => e.Id).ToListAsync();
             return res;
         }
 

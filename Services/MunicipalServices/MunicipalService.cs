@@ -134,7 +134,8 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
 
         public async Task<List<ServicesCategories>> GetServiceCategoriesAsync()
         {
-            var categories = await _context.ServicesCategories.OrderByDescending(x => x.Id).ToListAsync();
+            var categories = await _context.ServicesCategories.Where(c => c.IsDeleted == false)
+                .OrderByDescending(x => x.Id).ToListAsync();
             return categories;
         }
 
