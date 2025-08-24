@@ -15,24 +15,40 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
         }
 
 
-        public async Task<ServicesCategories> CreateServiceCategoryAsync(CreateServiceCategoryDto dto)
+        public async Task<ServicesCategories?> CreateServiceCategoryAsync(CreateServiceCategoryDto dto)
         {
-            bool exists = await _context.ServicesCategories
-             .AnyAsync(e => e.Name == dto.Name);
-            if (exists)
+            // Find if a category with the same name exists (even deleted ones)
+            var existingCategory = await _context.ServicesCategories
+                .FirstOrDefaultAsync(e => e.Name == dto.Name);
+
+            if (existingCategory != null)
             {
+                if (existingCategory.IsDeleted)
+                {
+                    // Reactivate soft-deleted category
+                    existingCategory.IsDeleted = false;
+                    _context.ServicesCategories.Update(existingCategory);
+                    await _context.SaveChangesAsync();
+                    return existingCategory;
+                }
+
+                // Already exists and not deleted → reject
                 return null;
             }
 
+            // Otherwise, create a new category
             var newServiceCategory = new ServicesCategories
             {
                 Id = Guid.NewGuid(),
-                Name = dto.Name
+                Name = dto.Name,
+                IsDeleted = false
             };
+
             _context.ServicesCategories.Add(newServiceCategory);
             await _context.SaveChangesAsync();
             return newServiceCategory;
         }
+
 
         public async Task<Service?> CreateService(CreateServiceDto dto)
         {
@@ -164,24 +180,35 @@ namespace SawirahMunicipalityWeb.Services.MunicipalServices
 
         public async Task<bool> DeleteServiceCategoryAsync(Guid id)
         {
-            var DeletedCateg = await _context.ServicesCategories.FindAsync(id);
-            if (DeletedCateg is null)
-            {
-                return false;
-            }
-            _context.ServicesCategories.Remove(DeletedCateg);
+            var category = await _context.ServicesCategories.FindAsync(id);
+            if (category is null) return false;
+            category.IsDeleted = true;
+            _context.ServicesCategories.Update(category);
             await _context.SaveChangesAsync();
             return true;
         }
 
-        public async Task<Service> GetServiceByIdAsync(Guid id)
+        public async Task<GetServiceDto?> GetServiceByIdAsync(Guid id)
         {
-            var service = await _context.Services.FindAsync(id);
-            if (service is null)
+            var service = await _context.Services
+                .Include(s => s.Category)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (service is null) return null;
+
+            return new GetServiceDto
             {
-                return null;
-            }
-            return service;
+                Id = service.Id,
+                ImageUrl = service.ImageUrl,
+                Title = service.Title,
+                Description = service.Description,
+                Status = service.Status,
+                CreatedAt = service.CreatedAt,
+                UpdatedAt = service.UpdatedAt,
+                Slug = service.Slug,
+                CategoryId = service.CategoryId,
+                CategoryName = service.Category != null ? service.Category.Name : null
+            };
         }
     }
 

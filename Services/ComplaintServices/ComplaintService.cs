@@ -5,6 +5,7 @@ using SawirahMunicipalityWeb.Enums;
 using SawirahMunicipalityWeb.Helpers;
 using SawirahMunicipalityWeb.Models;
 
+
 namespace SawirahMunicipalityWeb.Services.ComplaintServices
 {
     public class ComplaintService : IComplaintService
@@ -127,8 +128,8 @@ namespace SawirahMunicipalityWeb.Services.ComplaintServices
             {
                 return false;
             }
-            _context.ComplaintIssues.Remove(res);
-
+            res.IsDeleted = true;
+            _context.ComplaintIssues.Update(res);
             await _context.SaveChangesAsync();
             return true;
         }

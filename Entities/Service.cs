@@ -15,6 +15,7 @@ namespace SawirahMunicipalityWeb.Entities
         public string Slug { get; set; }
         [NotMapped]
         public string? CategoryName => Category?.Name;
+        
         // Fk
         public Guid? CategoryId { get; set; }
 
