@@ -40,7 +40,16 @@ builder.Services.AddDbContext<DBContext>(options =>
         connStr = $"Host={host};Port={port};Database={db};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true";
     }
 
-    options.UseNpgsql(connStr);
+    // ✅ Enable retry on failure & set command timeout
+    options.UseNpgsql(connStr, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(10),
+            errorCodesToAdd: null
+        );
+        npgsqlOptions.CommandTimeout(60); // 60 seconds
+    });
 });
 
 // ------------------- Identity -------------------
@@ -57,7 +66,6 @@ builder.Services.AddScoped<IComplaintService, ComplaintService>();
 builder.Services.AddTransient<ISendEmailService, SendEmailService>();
 builder.Services.AddHttpClient("SupabaseStorageClient");
 builder.Services.AddScoped<SawirahMunicipalityWeb.Services.ImageService.SupabaseImageService>();
-
 
 // ------------------- JWT Authentication -------------------
 builder.Services.AddAuthentication(options =>
@@ -104,25 +112,20 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-app.UseCors("FrontendPolicy");
 
 // ------------------- Middleware -------------------
 app.UseCors("FrontendPolicy");
-
 app.UseCookiePolicy(new CookiePolicyOptions
 {
     MinimumSameSitePolicy = SameSiteMode.None,
     HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.Always,
     Secure = CookieSecurePolicy.SameAsRequest
 });
-
-// Enable Swagger in Production
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Municipality API V1");
 });
-
 app.UseHealthChecks("/health");
 //app.UseHttpsRedirection();
 app.UseAuthentication();
@@ -152,9 +155,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     if (retries == 0)
-    {
         Console.WriteLine("Database migration failed after multiple attempts. App will continue.");
-    }
 
     // Log all endpoints
     var endpoints = app.Services.GetRequiredService<EndpointDataSource>()
