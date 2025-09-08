@@ -325,6 +325,9 @@ namespace SawirahMunicipalityWeb.Migrations
                     b.Property<string>("ReplacedByToken")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("text");

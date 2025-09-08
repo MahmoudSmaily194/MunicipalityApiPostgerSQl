@@ -12,8 +12,8 @@ using SawirahMunicipalityWeb.Data;
 namespace SawirahMunicipalityWeb.Migrations
 {
     [DbContext(typeof(DBContext))]
-    [Migration("20250824172239_issue type and categ ")]
-    partial class issuetypeandcateg
+    [Migration("20250907204045_adding revoked at to the refresh token ")]
+    partial class addingrevokedattotherefreshtoken
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -327,6 +327,9 @@ namespace SawirahMunicipalityWeb.Migrations
 
                     b.Property<string>("ReplacedByToken")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Token")
                         .IsRequired()

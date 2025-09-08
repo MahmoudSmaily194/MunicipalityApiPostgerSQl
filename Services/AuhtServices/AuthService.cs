@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,13 +23,15 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _environment;
         private readonly SupabaseImageService _imageService;
-        public AuthService(DBContext context,
+
+        public AuthService(
+            DBContext context,
             IConfiguration configuration,
             UserManager<User> userManager,
             RoleManager<IdentityRole<Guid>> roleManager,
             IHttpContextAccessor httpContextAccessor,
-            IWebHostEnvironment environment, SupabaseImageService imageService)
-
+            IWebHostEnvironment environment,
+            SupabaseImageService imageService)
         {
             _context = context;
             _configuration = configuration;
@@ -41,6 +42,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             _imageService = imageService;
         }
 
+        // ================= Login =================
         public async Task<TokenResponseDto?> LoginAsync(LoginDto request)
         {
             bool isEmail = request.EmailOrPhone.Contains("@");
@@ -50,36 +52,26 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                     ? u.Email == request.EmailOrPhone
                     : u.PhoneNumber == request.EmailOrPhone);
 
-            if (user == null)
-                return null;
-
-            if (!await _userManager.CheckPasswordAsync(user, request.Password))
+            if (user == null || !await _userManager.CheckPasswordAsync(user, request.Password))
                 return null;
 
             var accessToken = CreateToken(user);
             var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
 
-            var refreshTokenCookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(7)
-            };
-
-            _httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", refreshToken, refreshTokenCookieOptions);
+            SetRefreshTokenCookie(refreshToken);
 
             return new TokenResponseDto
             {
                 AccessToken = accessToken,
                 FullName = user.FullName,
                 Role = user.Role.ToString(),
-                RefreshToken = null,
                 email = user.Email,
-                ProfilePhoto = user.ProfilePhoto
+                ProfilePhoto = user.ProfilePhoto,
+                RefreshToken = null // Refresh token stored in HttpOnly cookie
             };
         }
 
+        // ================= Register =================
         public async Task<IdentityResult> RegisterAsync(RegisterDto request)
         {
             var existingUser = await _userManager.Users
@@ -100,17 +92,16 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
-                return result;
+            if (!result.Succeeded) return result;
 
             if (!await _roleManager.RoleExistsAsync(user.Role.ToString()))
                 await _roleManager.CreateAsync(new IdentityRole<Guid>(user.Role.ToString()));
 
             await _userManager.AddToRoleAsync(user, user.Role.ToString());
-
             return result;
         }
 
+        // ================== Token Generation ==================
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
@@ -129,15 +120,29 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             {
                 Token = token,
                 CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                ExpiresAt = DateTime.UtcNow.AddDays(35), // ✅ 35-day expiry
                 UserId = user.Id,
                 CreatedByIp = ipAddress,
-                UserAgent = userAgent
+                UserAgent = userAgent,
+                IsUsed = false,
+                IsRevoked = false
             };
 
             await _context.RefreshTokens.AddAsync(refreshToken);
             await _context.SaveChangesAsync();
             return token;
+        }
+
+        private void SetRefreshTokenCookie(string refreshToken)
+        {
+            var options = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTime.UtcNow.AddDays(35)
+            };
+            _httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", refreshToken, options);
         }
 
         private string CreateToken(User user)
@@ -150,10 +155,7 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 new Claim(ClaimTypes.Email, user.Email ?? ""),
             };
 
-            var keyString = _configuration.GetValue<string>("AppSettings:Token");
-            if (string.IsNullOrEmpty(keyString))
-                throw new Exception("JWT signing key is not configured.");
-
+            var keyString = _configuration.GetValue<string>("AppSettings:Token") ?? throw new Exception("JWT key missing");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
@@ -170,63 +172,32 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
             return new JwtSecurityTokenHandler().WriteToken(tokenDescriptor);
         }
 
+        // ================= Refresh Token =================
         public async Task<TokenResponseDto?> RefreshTokenAsync()
         {
             var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["RefreshToken"];
-            if (string.IsNullOrEmpty(refreshToken))
-                return null;
+            if (string.IsNullOrEmpty(refreshToken)) return null;
 
             var storedToken = await _context.RefreshTokens
                 .Include(r => r.User)
                 .FirstOrDefaultAsync(t => t.Token == refreshToken);
 
-            if (storedToken == null)
-                return null;
+            if (storedToken == null) return null;
+            if (storedToken.IsRevoked || storedToken.ExpiresAt < DateTime.UtcNow) return null;
 
-            // ❌ Expired token
-            if (storedToken.ExpiresAt < DateTime.UtcNow)
-                return null;
-
-            // ❌ Token reuse or revoked
-            if (storedToken.IsUsed || storedToken.IsRevoked)
-            {
-                var userTokens = await _context.RefreshTokens
-                    .Where(t => t.UserId == storedToken.UserId && !t.IsRevoked)
-                    .ToListAsync();
-
-                foreach (var token in userTokens)
-                    token.IsRevoked = true;
-
-                await _context.SaveChangesAsync();
-                return null;
-            }
-
-            // ❌ Check maximum refresh window
-            if ((DateTime.UtcNow - storedToken.CreatedAt).TotalDays > 30)
-            {
-                storedToken.IsRevoked = true;
-                await _context.SaveChangesAsync();
-                return null;
-            }
-
-            storedToken.IsUsed = true;
-
+            // ✅ Rotation: generate new token first
             var newRefreshToken = await GenerateAndSaveRefreshTokenAsync(storedToken.User);
+
+            // Mark old token as used and store replacedBy
+            storedToken.IsUsed = true;
             storedToken.ReplacedByToken = newRefreshToken;
-
-            var accessToken = CreateToken(storedToken.User);
-
-            var refreshTokenCookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTime.UtcNow.AddDays(35)
-            };
-
-            _httpContextAccessor.HttpContext?.Response.Cookies.Append("RefreshToken", newRefreshToken, refreshTokenCookieOptions);
+            storedToken.RevokedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            SetRefreshTokenCookie(newRefreshToken);
+
+            var accessToken = CreateToken(storedToken.User);
 
             return new TokenResponseDto
             {
@@ -234,15 +205,16 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 FullName = storedToken.User.FullName,
                 Role = storedToken.User.Role.ToString(),
                 email = storedToken.User.Email,
-                RefreshToken = null,
-                ProfilePhoto = storedToken.User.ProfilePhoto
+                ProfilePhoto = storedToken.User.ProfilePhoto,
+                RefreshToken = null
             };
         }
+
+        // ================= Logout =================
         public async Task LogoutAsync()
         {
             var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["RefreshToken"];
-            if (string.IsNullOrEmpty(refreshToken))
-                return;
+            if (string.IsNullOrEmpty(refreshToken)) return;
 
             var storedToken = await _context.RefreshTokens
                 .FirstOrDefaultAsync(t => t.Token == refreshToken);
@@ -253,9 +225,10 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
                 await _context.SaveChangesAsync();
             }
 
-            // حذف الكوكي من المتصفح
             _httpContextAccessor.HttpContext?.Response.Cookies.Delete("RefreshToken");
         }
+
+        // ================= Profile Image =================
         public async Task<string> UpdateProfileImageAsync(Guid userId, IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -263,33 +236,18 @@ namespace SawirahMunicipalityWeb.Services.AuhtServices
 
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png" };
             var extension = Path.GetExtension(file.FileName).ToLower();
-
             if (!allowedExtensions.Contains(extension))
                 throw new ArgumentException("Invalid file type. Only JPG and PNG are allowed.");
 
-            // رفع الصورة إلى Supabase بدلاً من حفظها محليًا
-            string imageUrl;
-            try
-            {
-                imageUrl = await _imageService.UploadImageAsync(file, "sawirah-images");
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Failed to upload image to Supabase: " + ex.Message);
-            }
+            string imageUrl = await _imageService.UploadImageAsync(file, "sawirah-images");
 
-            // تحديث المستخدم في قاعدة البيانات
             var user = await _context.Users.FindAsync(userId);
-            if (user == null)
-                throw new Exception("User not found.");
+            if (user == null) throw new Exception("User not found.");
 
             user.ProfilePhoto = imageUrl;
-
             await _context.SaveChangesAsync();
 
             return user.ProfilePhoto;
         }
-
-
     }
 }

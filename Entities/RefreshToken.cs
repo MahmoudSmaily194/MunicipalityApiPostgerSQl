@@ -18,7 +18,7 @@
         // Optional: track client info for security auditing
         public string? CreatedByIp { get; set; }
         public string? UserAgent { get; set; }
-
+        public DateTime? RevokedAt { get; set; }
         // Relation to user
         public Guid UserId { get; set; }
         public User User { get; set; } = null!;
